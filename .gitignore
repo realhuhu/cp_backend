@@ -1,0 +1,10 @@
+*.log
+*.pyc
+__pycache__
+.idea/
+backend/apps/*/migrations/*.py
+!backend/apps/*/migrations/__init__.py
+backend/settings/dev.py
+backend/settings/pro.py
+backend/libs/constants/keys.py
+backend/apps/*/tests.py
