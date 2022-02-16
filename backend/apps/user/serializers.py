@@ -184,8 +184,50 @@ class ResetPasswordSerializer(EmptySerializer):
         return user
 
 
+class ChangePasswordSerializer(EmptySerializer):
+    old_password = serializers.CharField()
+    new_password = serializers.CharField()
+    confirm_password = serializers.CharField()
+
+    def validate_old_password(self, old_password):
+        if not re.search(re_patterns.PASSWORD, old_password):
+            self.set_context(response_code.INVALID_PASSWORD, "非法的密码")
+            raise ValidationError("非法的密码")
+
+        return old_password
+
+    def validate_new_password(self, old_new_password):
+        if not re.search(re_patterns.PASSWORD, old_new_password):
+            self.set_context(response_code.INVALID_PASSWORD, "非法的密码")
+            raise ValidationError("非法的密码")
+
+        return old_new_password
+
+    def validate_confirm_password(self, confirm_password):
+        if not re.search(re_patterns.PASSWORD, confirm_password):
+            self.set_context(response_code.INVALID_PASSWORD, "非法的密码")
+            raise ValidationError("非法的密码")
+
+        return confirm_password
+
+    def validate(self, attrs):
+        new_password = attrs.get("new_password")
+        confirm_password = attrs.get("confirm_password")
+        if new_password != confirm_password:
+            self.set_context(response_code.INCONSISTENT_PASSWORD, "两次密码不一致")
+            raise ValidationError("密码与确认密码不一致")
+
+        return attrs
+
+    def update(self, instance, validated_data):
+        instance.set_password(validated_data.get("new_password"))
+        instance.save()
+        return instance
+
+
 __all__ = [
     "RegisterSerializer",
     "LoginSerializer",
-    "ResetPasswordSerializer"
+    "ResetPasswordSerializer",
+    "ChangePasswordSerializer"
 ]

@@ -66,6 +66,18 @@ class UserInfoView(ViewSet):
         ser.save()
         return APIResponse(response_code.SUCCESS_RESET_PASSWORD, "重置密码成功")
 
+    @action(["POST"], False)
+    def change_password(self, request):
+        ser = ChangePasswordSerializer(request.user, request.data)
+        if not ser.is_valid():
+            return InValidParamsResponse(ser)
+
+        if not request.user.check_password(ser.validated_data.get("old_password")):
+            return APIResponse(response_code.INCORRECT_PASSWORD, "原密码错误")
+
+        ser.save()
+        return APIResponse(response_code.SUCCESS_RESET_PASSWORD, "重置密码成功")
+
 
 __all__ = [
     "RegisterView",
