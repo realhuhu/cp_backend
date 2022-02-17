@@ -225,9 +225,115 @@ class ChangePasswordSerializer(EmptySerializer):
         return instance
 
 
+class BindPhoneView(EmptySerializer):
+    phone = serializers.CharField()
+    code = serializers.CharField()
+
+    def validate_phone(self, phone):
+        if not re.search(re_patterns.PHONE, phone):
+            self.set_context(response_code.INVALID_PHONE, "无效的电话号码")
+            raise ValidationError("无效的电话号码")
+
+        is_register = User.objects.filter(phone=phone).exists()
+        if is_register:
+            self.set_context(response_code.REGISTERED, "手机号已绑定账号")
+            raise ValidationError("手机号已绑定账号")
+
+        return phone
+
+    def validate_code(self, code):
+        if not re.search(re_patterns.CODE, code):
+            self.set_context(response_code.INCORRECT_CODE_FORM, "验证码格式错误")
+            raise ValidationError("验证码格式错误")
+
+        return code
+
+    def validate(self, attrs):
+        phone = attrs.get("phone")
+        code = attrs.get("code")
+        if code != cache.get("bind_phone" + phone):
+            self.set_context(response_code.INCORRECT_CODE, "验证码错误")
+            raise ValidationError("验证码错误")
+
+        return attrs
+
+    def update(self, instance, validated_data):
+        phone = validated_data.get("phone")
+
+        instance.phone = phone
+        instance.save()
+
+        return instance
+
+
+class UnbindPhoneView(EmptySerializer):
+    phone = serializers.CharField()
+    code = serializers.CharField()
+
+    def validate_phone(self, phone):
+        if not re.search(re_patterns.PHONE, phone):
+            self.set_context(response_code.INVALID_PHONE, "无效的电话号码")
+            raise ValidationError("无效的电话号码")
+
+        is_register = User.objects.filter(phone=phone).exists()
+        if not is_register:
+            self.set_context(response_code.REGISTERED, "手机号未绑定账号")
+            raise ValidationError("手机号未绑定账号")
+
+        return phone
+
+    def validate_code(self, code):
+        if not re.search(re_patterns.CODE, code):
+            self.set_context(response_code.INCORRECT_CODE_FORM, "验证码格式错误")
+            raise ValidationError("验证码格式错误")
+
+        return code
+
+    def validate(self, attrs):
+        phone = attrs.get("phone")
+        code = attrs.get("code")
+        if code != cache.get("unbind_phone" + phone):
+            self.set_context(response_code.INCORRECT_CODE, "验证码错误")
+            raise ValidationError("验证码错误")
+
+        return attrs
+
+    def update(self, instance, validated_data):
+        instance.phone = None
+        instance.save()
+
+        return instance
+
+
+class UserInfoSerializer(EmptySerializer):
+    username = serializers.CharField(required=False)
+
+    def validate_username(self, username):
+        is_register = User.objects.filter(username=username).exists()
+        if is_register:
+            self.set_context(response_code.USERNAME_REGISTERED, "用户名已注册")
+            raise ValidationError("用户名已注册")
+
+        if not re.search(re_patterns.USERNAME, username):
+            self.set_context(response_code.INVALID_USERNAME, "非法的用户名")
+            raise ValidationError("非法的用户名")
+        return username
+
+    def update(self, instance, validated_data):
+        username = validated_data.get("username")
+        if username:
+            instance.username = username
+        instance.save()
+
+        return instance
+
+
 __all__ = [
     "RegisterSerializer",
     "LoginSerializer",
     "ResetPasswordSerializer",
-    "ChangePasswordSerializer"
+    "ChangePasswordSerializer",
+    "BindPhoneView",
+    "UnbindPhoneView",
+    "UserInfoSerializer"
 ]

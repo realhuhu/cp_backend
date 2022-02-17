@@ -11,6 +11,7 @@ from backend.libs import (
     CommonJwtAuthentication,
     UserInfoResponse
 )
+from backend.utils.COS import *
 
 
 class RegisterView(ViewSet):
@@ -55,7 +56,16 @@ class UserInfoView(ViewSet):
 
     @action(["GET", "POST"], False)
     def user_info(self, request):
-        return UserInfoResponse(request.user, response_code.SUCCESS_GET_USER_INFO)
+        if request.method == "GET":
+            return UserInfoResponse(request.user, response_code.SUCCESS_GET_USER_INFO)
+        else:
+            ser = UserInfoSerializer(request.user, request.data)
+            if not ser.is_valid():
+                return InValidParamsResponse(ser)
+
+            user = ser.save()
+            code = response_code.SUCCESS_POST_USER_INFO
+            return UserInfoResponse(user, code)
 
     @action(["POST"], False)
     def reset_password(self, request):
@@ -77,6 +87,48 @@ class UserInfoView(ViewSet):
 
         ser.save()
         return APIResponse(response_code.SUCCESS_RESET_PASSWORD, "重置密码成功")
+
+    @action(["POST"], False)
+    def bind_phone(self, request):
+        ser = BindPhoneView(request.user, request.data)
+        if not ser.is_valid():
+            return InValidParamsResponse(ser)
+
+        ser.save()
+        return APIResponse(response_code.SUCCESS_BIND_PHONE, "绑定手机成功")
+
+    @action(["POST"], False)
+    def unbind_phone(self, request):
+        ser = UnbindPhoneView(request.user, request.data)
+        if not ser.is_valid():
+            return InValidParamsResponse(ser)
+
+        ser.save()
+        return APIResponse(response_code.SUCCESS_UNBIND_PHONE, "解除绑定成功")
+
+    @action(["POST"], False)
+    def icon(self, request):
+        file = request.data.get("icon")
+        user = request.user
+        if not isinstance(file, File):
+            return APIResponse(response_code.WRONG_FORM, "请上传图片")
+
+        form = str(file).split(".")[-1]
+        if form.lower() not in ("jpg", "png", "bmp", "jpeg"):
+            return APIResponse(response_code.WRONG_FORM, "不支持的图片格式")
+
+        if file.size / (1024 * 1024) > 5:
+            return APIResponse(response_code.EXCEEDED_SIZE, "图片不能超过5M")
+
+        if user.icon != "icon/default.jpg":
+            delete_obj(user.icon)
+
+        path = f"icon/{user.id}.{form}"
+        if user.icon != path:
+            user.icon = path
+            user.save()
+        put_obj(file, path)
+        return APIResponse(response_code.SUCCESS_CHANGE_ICON, "修改头像成功")
 
 
 __all__ = [
