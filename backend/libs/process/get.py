@@ -17,6 +17,7 @@ def getUserInfo(user):
         "date_joined": user.date_joined,
         "phone": user.phone,
         "icon": user.icon,
+        "is_superuser": user.is_superuser
     }
 
 
