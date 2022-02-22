@@ -17,7 +17,7 @@ class QuestionBankView(APIModelViewSet):
         if cid := self.request.query_params.copy().get("cid"):
             self.filter_fields = []
             self.search_fields = ["content", "choice_a", "choice_b", "choice_b", "category", "difficulty"]
-            return CompetitionToQuestionBank.objects.filter(competition_id=cid[0]).all().annotate(
+            a = CompetitionToQuestionBank.objects.filter(competition_id_id=cid).all().annotate(
                 qid=F("question_id"),
                 content=F("question_id__content"),
                 choice_a=F("question_id__choice_a"),
@@ -43,6 +43,8 @@ class QuestionBankView(APIModelViewSet):
                 "difficulty",
                 "is_active",
             ).order_by("question_id_id")
+            print(a)
+            return a
         return self.queryset
 
     def get_serializer(self, *args, **kwargs):
