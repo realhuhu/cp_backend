@@ -43,7 +43,6 @@ class QuestionBankView(APIModelViewSet):
                 "difficulty",
                 "is_active",
             ).order_by("question_id_id")
-            print(a)
             return a
         return self.queryset
 

@@ -4,27 +4,13 @@ from rest_framework.decorators import action
 
 from .models import *
 from .serializers import *
-from backend.libs import (
-    InValidParamsResponse,
-    APIResponse, getUserInfo,
-    response_code,
-    CommonJwtAuthentication,
-    UserInfoResponse
-)
+from backend.libs import *
 from backend.utils.COS import *
 
 
 class RegisterView(ViewSet):
     @action(["POST"], False)
     def register(self, request):
-        """
-        POST     /user/register/
-        params = {
-            username
-            password
-            confirm_password
-        }
-        """
         ser = RegisterSerializer(data=request.data)
         if not ser.is_valid():
             return InValidParamsResponse(ser)

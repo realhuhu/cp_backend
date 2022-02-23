@@ -37,7 +37,7 @@ class Competition(models.Model):
 class UserToCompetition(models.Model):
     user_id = models.ForeignKey(to="user.User", on_delete=models.DO_NOTHING)
     competition_id = models.ForeignKey(to="Competition", on_delete=models.DO_NOTHING)
-    answer = models.TextField(verbose_name="答题信息")
+    answer = models.TextField(null=True, default=None, verbose_name="答题信息")
     start_time = models.DateTimeField(auto_now_add=True, verbose_name="开始答题时间")
     time_used = models.IntegerField(null=True, default=None, verbose_name="耗时(秒)")
     score = models.IntegerField(default=0, verbose_name="得分")

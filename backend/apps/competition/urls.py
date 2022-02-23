@@ -4,6 +4,8 @@ from rest_framework.routers import SimpleRouter
 from .views import *
 
 router = SimpleRouter()
+router.register("", CompetitionView, "")
+router.register("", CompetitionDetailView, "")
 
 urlpatterns = [
     path("", include(router.urls))
