@@ -37,7 +37,7 @@ class CompetitionDetailView(ViewSet):
         if record:
             answer_start = record.start_time
 
-            if info["time_limit"] and (now - answer_start).seconds > info["time_limit"] * 60:
+            if info["time_limit"] and not record.time_used and (now - answer_start).seconds > info["time_limit"] * 60:
                 record.time_used = info["time_limit"] * 60
                 record.save()
                 competition.answer_num += 1
@@ -93,10 +93,16 @@ class CompetitionDetailView(ViewSet):
     def score(self, request, pk):
         uid = request.user
         record = UserToCompetition.objects.filter(user_id=uid, competition_id_id=pk, is_active=True).first()
+        competition = Competition.objects.filter(id=pk, is_active=True).first()
+        start = record.start_time
+        now = datetime.datetime.now()
         raw = json.loads(record.answer)
 
-        if not record or not record.time_used:
+        if not record:
             return APIResponse(response_code.NOT_ANSWERED, "未参加比赛")
+
+        if not record.time_used and (now - start).seconds < competition.time_limit * 60:
+            return APIResponse(response_code.NOT_ANSWERED, "未提交")
 
         if record.score is not None:
             return APIResponse(code=response_code.SUCCESS_GET_SCORE, result={
@@ -121,6 +127,12 @@ class CompetitionDetailView(ViewSet):
             c_question.save()
 
         record.score = score
+
+        if not record.time_used:
+            record.time_used = competition.time_limit * 60
+            competition.answer_num += 1
+            competition.save()
+
         record.save()
 
         return APIResponse(code=response_code.SUCCESS_GET_SCORE, result={
@@ -130,7 +142,17 @@ class CompetitionDetailView(ViewSet):
         })
 
 
+class EntryView(APIModelViewSet):
+    http_method_names = ['get', 'head', 'options', 'trace']
+    authentication_classes = [CommonJwtAuthentication]
+    serializer_class = EntrySerializer
+
+    def get_queryset(self):
+        return UserToCompetition.objects.filter(is_active=True, user_id=self.request.user).all().order_by("-id")
+
+
 __all__ = [
     "CompetitionView",
-    "CompetitionDetailView"
+    "CompetitionDetailView",
+    "EntryView",
 ]
