@@ -40,7 +40,7 @@ class UserToCompetition(models.Model):
     answer = models.TextField(null=True, default=None, verbose_name="答题信息")
     start_time = models.DateTimeField(auto_now_add=True, verbose_name="开始答题时间")
     time_used = models.IntegerField(null=True, default=None, verbose_name="耗时(秒)")
-    score = models.IntegerField(default=0, verbose_name="得分")
+    score = models.IntegerField(null=True, default=None, verbose_name="得分")
     is_active = models.BooleanField(default=True, verbose_name="是否有效")
 
 

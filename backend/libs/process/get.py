@@ -23,5 +23,5 @@ def getUserInfo(user):
 
 __all__ = [
     "getToken",
-    "getUserInfo"
+    "getUserInfo",
 ]
