@@ -92,7 +92,11 @@ class CompetitionDetailView(ViewSet):
     @action(["GET"], True)
     def score(self, request, pk):
         uid = request.user
-        record = UserToCompetition.objects.filter(user_id=uid, competition_id_id=pk, is_active=True).first()
+        record = UserToCompetition.objects.filter(user_id=uid, competition_id_id=pk).first()
+
+        if not record.is_active:
+            return APIResponse(response_code.INVALID_SCORE, "成绩无效")
+
         competition = Competition.objects.filter(id=pk, is_active=True).first()
         start = record.start_time
         now = datetime.datetime.now()
@@ -151,8 +155,46 @@ class EntryView(APIModelViewSet):
         return UserToCompetition.objects.filter(is_active=True, user_id=self.request.user).all().order_by("-id")
 
 
+class ExerciseView(ViewSet):
+    authentication_classes = [CommonJwtAuthentication]
+
+    @action(["GET", "POST"], False)
+    def random(self, request):
+        if request.method == "GET":
+            question = QuestionBank.objects.filter(is_active=True).order_by("?").first()
+            return APIResponse(result={
+                "id": question.id,
+                "content": question.content,
+                "choice_a": question.choice_a,
+                "choice_b": question.choice_b,
+                "choice_c": question.choice_c,
+                "choice_d": question.choice_d,
+                "difficulty": question.difficulty,
+                "answer_num": question.answer_num,
+                "correct_answer_num": question.correct_answer_num
+            })
+        else:
+            qid = request.data.get("id")
+            answer = request.data.get("answer")
+            question = QuestionBank.objects.filter(is_active=True, id=qid).first()
+
+            right = False
+
+            question.answer_num += 1
+            if question.answer == answer:
+                question.correct_answer_num += 1
+                right = True
+
+            question.save()
+            return APIResponse(result={
+                "right": right,
+                "answer": question.answer
+            })
+
+
 __all__ = [
     "CompetitionView",
     "CompetitionDetailView",
     "EntryView",
+    "ExerciseView",
 ]
