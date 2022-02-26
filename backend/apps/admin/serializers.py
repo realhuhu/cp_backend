@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 
 from competition.models import *
 from user.models import *
+from common.models import *
 from backend.libs import *
 
 
@@ -26,6 +27,25 @@ class QuestionBankSerializer(serializers.ModelSerializer):
                   "correct_answer_num",
                   "is_active"
                   ]
+
+
+class ScoreSerializer(serializers.ModelSerializer):
+    competition = serializers.CharField(source='competition_id.title')
+    username = serializers.CharField(source="user_id.username")
+    time_limit = serializers.CharField(source='competition_id.time_limit')
+
+    class Meta:
+        model = UserToCompetition
+        fields = [
+            "id",
+            "username",
+            "start_time",
+            "time_used",
+            "score",
+            "is_active",
+            "competition",
+            "time_limit"
+        ]
 
 
 class CompetitionSerializer(serializers.ModelSerializer):
@@ -72,8 +92,30 @@ class UserSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class ArticleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Articles
+        fields = "__all__"
+
+
+class SwipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Swipe
+        fields = "__all__"
+
+
+class TopSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Top
+        fields = "__all__"
+
+
 __all__ = [
     "QuestionBankSerializer",
+    "ScoreSerializer",
     "CompetitionSerializer",
     "UserSerializer",
+    "ArticleSerializer",
+    "SwipeSerializer",
+    "TopSerializer",
 ]

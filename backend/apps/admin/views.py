@@ -1,8 +1,11 @@
+from django.db.models import F, Q
+from rest_framework.mixins import DestroyModelMixin
+
 from competition.models import *
 from user.models import *
+from common.models import *
 from .serializers import *
 from backend.libs import *
-from django.db.models import F
 
 
 class QuestionBankView(APIModelViewSet):
@@ -56,6 +59,25 @@ class QuestionBankView(APIModelViewSet):
             return serializer_class(*args, **kwargs)
 
 
+class ScoreView(APIModelViewSet):
+    throttle_classes = []
+    authentication_classes = [SuperuserJwtAuthentication]
+    queryset = UserToCompetition.objects.all().order_by("-score")
+    serializer_class = ScoreSerializer
+    filter_fields = ["is_active"]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        search = self.request.query_params.get("search")
+
+        if search:
+            queryset = queryset.filter(
+                Q(user_id__username__contains=search) | Q(competition_id__title__contains=search)
+            )
+
+        return queryset
+
+
 class CompetitionView(APIModelViewSet):
     throttle_classes = []
     authentication_classes = [SuperuserJwtAuthentication]
@@ -74,8 +96,39 @@ class UserView(APIModelViewSet):
     search_fields = ["username", "phone"]
 
 
+class ArticleView(APIModelViewSet):
+    throttle_classes = []
+    authentication_classes = [SuperuserJwtAuthentication]
+    queryset = Articles.objects.all().order_by("create_time")
+    serializer_class = ArticleSerializer
+    filter_fields = ["is_active", "published"]
+    search_fields = ["title", "description", "content"]
+
+
+class SwipeView(APIModelViewSet):
+    throttle_classes = []
+    authentication_classes = [SuperuserJwtAuthentication]
+    queryset = Swipe.objects.all().order_by("id")
+    serializer_class = SwipeSerializer
+    search_fields = ["url"]
+
+
+class TopView(APIModelViewSet, DestroyModelMixin):
+    http_method_names = ['get', 'post', 'put', 'patch', "delete", 'head', 'options', 'trace']
+
+    throttle_classes = []
+    authentication_classes = [SuperuserJwtAuthentication]
+    queryset = Top.objects.order_by("id")
+    serializer_class = TopSerializer
+    search_fields = ["url", "title"]
+
+
 __all__ = [
     "QuestionBankView",
+    "ScoreView",
     "CompetitionView",
-    "UserView"
+    "UserView",
+    "ArticleView",
+    "SwipeView",
+    "TopView",
 ]

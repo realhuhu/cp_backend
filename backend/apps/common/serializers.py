@@ -2,6 +2,7 @@ import re
 from rest_framework.exceptions import ValidationError
 
 from user.models import User
+from .models import *
 from backend.libs import *
 from backend.utils import SMS
 
@@ -56,6 +57,33 @@ class SMSSerializer(EmptySerializer):
         return attrs
 
 
+class ArticleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Articles
+        fields = [
+            "id",
+            "title",
+            "description",
+            "create_time",
+            "update_time",
+        ]
+
+
+class ArticleDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Articles
+        fields = [
+            "id",
+            "title",
+            "description",
+            "create_time",
+            "update_time",
+            "content"
+        ]
+
+
 __all__ = [
-    "SMSSerializer"
+    "SMSSerializer",
+    "ArticleSerializer",
+    "ArticleDetailSerializer",
 ]
