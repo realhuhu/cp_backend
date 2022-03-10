@@ -65,7 +65,7 @@ class RegisterSerializer(EmptySerializer):
             return attrs
 
         password = attrs.get("password")
-        confirm_password = attrs.pop("confirm_password")
+        confirm_password = attrs.pop("confirm_password", None)
         if password != confirm_password:
             self.set_context(response_code.INCONSISTENT_PASSWORD, "两次密码不一致")
             raise ValidationError("密码与确认密码不一致")

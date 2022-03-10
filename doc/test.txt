@@ -1,2 +1,0 @@
-F:\SEU\backend\venv\Scripts\python.exe
-F:\SEU\backend\venv\Scripts\pip.exe
