@@ -54,6 +54,7 @@ class RegisterSerializer(EmptySerializer):
         return code
 
     def validate(self, attrs):
+        print(attrs)
         if code := attrs.get("code"):
             phone = attrs.get("phone")
             if code != cache.get("register" + phone):
@@ -62,6 +63,7 @@ class RegisterSerializer(EmptySerializer):
             attrs.pop("code")
             attrs["password"] = phone
             attrs["username"] = str(int(time.time()))
+            print(attrs)
             return attrs
 
         password = attrs.get("password")
