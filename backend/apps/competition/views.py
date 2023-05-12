@@ -161,7 +161,6 @@ class CompetitionDetailView(ViewSet):
         return APIResponse(response_code.SUCCESS_GET_QUESTIONS, "成功获取题目", {"info": info, "questions": data})
 
     def _create_questions(self, user, answer_times, competition: Competition):
-        print(answer_times)
         if answer_times == 1:
             competition.answer_num += 1
             competition.save()
@@ -171,7 +170,9 @@ class CompetitionDetailView(ViewSet):
                         :competition.choice_num]
             instance2 = QuestionBank.objects.filter(is_active=True, question_type=1).order_by("?")[
                         :competition.TF_num]
-            instance = instance1.union(instance2)
+            instance3 = QuestionBank.objects.filter(is_active=True, question_type=2).order_by("?")[
+                        :competition.multi_num]
+            instance = instance1.union(instance2, instance3)
         else:
             instance = competition.questions.filter(is_active=True).all()
 
@@ -199,7 +200,8 @@ class CompetitionDetailView(ViewSet):
                 ).first()
                 question.answer_num += 1
                 c_question.answer_num += 1
-                if i.get("answer") == question.answer or {"A": "√", "B": "X"}.get(i.get("answer")) == question.answer:
+                # if i.get("answer") == question.answer or {"A": "√", "B": "X"}.get(i.get("answer")) == question.answer:
+                if set([i for i in question.answer]) == set([i for i in i.get("answer")]):
                     score += 1
                     question.correct_answer_num += 1
                     c_question.correct_answer_num += 1
@@ -208,7 +210,7 @@ class CompetitionDetailView(ViewSet):
                 c_question.save()
             else:
                 question.answer_num += 1
-                if i.get("answer") == question.answer or {"A": "√", "B": "X"}.get(i.get("answer")) == question.answer:
+                if set([i for i in question.answer]) == set([i for i in i.get("answer")]):
                     score += 1
                     question.correct_answer_num += 1
                 i["right_answer"] = question.answer
@@ -247,6 +249,7 @@ class ExerciseView(ViewSet):
                 "choice_d": question.choice_d,
                 "difficulty": question.difficulty,
                 "answer_num": question.answer_num,
+                "question_type": question.question_type,
                 "correct_answer_num": question.correct_answer_num
             })
         else:
@@ -257,11 +260,15 @@ class ExerciseView(ViewSet):
             right = False
 
             question.answer_num += 1
-            if question.answer == answer or question.answer == {"A": "√", "B": "X"}.get(answer):
+            if set([i for i in question.answer]) == set([i for i in answer]):
                 question.correct_answer_num += 1
                 right = True
 
             question.save()
+            print({
+                "right": right,
+                "answer": question.answer
+            })
             return APIResponse(result={
                 "right": right,
                 "answer": question.answer

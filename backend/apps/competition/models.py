@@ -13,7 +13,7 @@ class QuestionBank(models.Model):
     answer_num = models.IntegerField(default=0, verbose_name="被回答次数")
     correct_answer_num = models.IntegerField(default=0, verbose_name="被正确回答次数")
     is_active = models.BooleanField(default=True, verbose_name="是否有效")
-    question_type = models.IntegerField(default=0, verbose_name="是否为判断题")
+    question_type = models.IntegerField(default=0, verbose_name="题目类型")
 
     class Meta:
         ordering = ["id"]
@@ -33,6 +33,7 @@ class Competition(models.Model):
     total_num = models.IntegerField(null=True, verbose_name="题目数量")
     choice_num = models.IntegerField(verbose_name="选择题数量", null=True, default=None)
     TF_num = models.IntegerField(verbose_name="判断题数量", null=True, default=None)
+    multi_num = models.IntegerField(verbose_name="多选数量", null=True, default=None)
     answer_times = models.IntegerField(verbose_name="可答次数", default=1)
     is_random = models.BooleanField(default=True, verbose_name="是否随机")
 

@@ -27,6 +27,7 @@ class CompetitionDetailSerializer(serializers.ModelSerializer):
             "choice_b",
             "choice_c",
             "choice_d",
+            "question_type",
         ]
 
 

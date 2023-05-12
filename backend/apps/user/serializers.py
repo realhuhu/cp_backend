@@ -7,20 +7,20 @@ from backend.libs import *
 
 
 class LoginSerializer(EmptySerializer):
+    username = serializers.CharField()
     card = serializers.CharField()
-    password = serializers.CharField()
 
     def validate_card(self, card):
-        if not re.search("|".join([re_patterns.CARD, re_patterns.PHONE]), card):
+        if not re.search(re_patterns.CARD, card):
             raise SerializerError("无效的一卡通号", response_code.INVALID_USERNAME)
 
         return card
 
-    def validate_password(self, password):
-        if not re.search("|".join([re_patterns.PASSWORD, re_patterns.CODE]), password):
-            raise SerializerError("非法的密码", response_code.INVALID_PASSWORD)
+    def validate_username(self, username):
+        if not re.search(re_patterns.USERNAME, username):
+            raise SerializerError("非法的姓名", response_code.INVALID_USERNAME)
 
-        return password
+        return username
 
     def validate(self, attrs):
         user = self._get_user(attrs)
@@ -31,13 +31,10 @@ class LoginSerializer(EmptySerializer):
 
     def _get_user(self, attrs):
         card = attrs.get("card")
-        password = attrs.get("password")
-        user = User.objects.filter(Q(card=card) | Q(phone=card), is_active=True).first()
+        username = attrs.get("username")
+        user = User.objects.filter(card=card, username=username, is_active=True).first()
         if not user:
-            raise SerializerError("用户不存在", response_code.USERNAME_NOT_REGISTERED)
-
-        if not (user.check_password(password) or password == cache.get("login" + card)):
-            raise SerializerError("密码错误", response_code.INCORRECT_PASSWORD)
+            raise SerializerError("信息错误，请核查后重新输入", response_code.USERNAME_NOT_REGISTERED)
 
         return user
 

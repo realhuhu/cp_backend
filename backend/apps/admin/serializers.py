@@ -34,18 +34,26 @@ class QuestionBankSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        print(validated_data)
-        num = 0
-        if validated_data.get("choice_a"):
-            num += 1
-        if validated_data.get("choice_b"):
-            num += 1
-        if validated_data.get("choice_c"):
-            num += 1
-        if validated_data.get("choice_d"):
-            num += 1
-        if num <= 2:
-            validated_data["question_type"] = 1
+        validated_data["answer"] = validated_data.get("answer").replace(" ", '').strip().upper()
+        if len(validated_data.get("answer")) > 1:
+            validated_data["answer"] = "".join(sorted([i for i in validated_data.get("answer") if i in "ABCD"]))
+            validated_data["question_type"] = 2
+        else:
+            num = 0
+            if validated_data.get("choice_a"):
+                num += 1
+            if validated_data.get("choice_b"):
+                num += 1
+            if validated_data.get("choice_c"):
+                num += 1
+            if validated_data.get("choice_d"):
+                num += 1
+
+            if num <= 2:
+                validated_data["question_type"] = 1
+            else:
+                validated_data["question_type"] = 0
+
         return super(QuestionBankSerializer, self).create(validated_data)
 
 
@@ -73,6 +81,7 @@ class CompetitionSerializer(serializers.ModelSerializer):
     question_num = serializers.IntegerField(write_only=True, required=False)
     choice_num = serializers.IntegerField(write_only=True, required=False)
     TF_num = serializers.IntegerField(write_only=True, required=False)
+    multi_num = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
         model = Competition
@@ -83,8 +92,10 @@ class CompetitionSerializer(serializers.ModelSerializer):
         question_num = validated_data.pop("question_num", None)
         choice_num = validated_data.get("choice_num")
         TF_num = validated_data.get("TF_num")
+        multi_num = validated_data.get("multi_num")
 
-        if not question_list and not question_num and not (TF_num is not None and choice_num is not None):
+        if not question_list and not question_num and not (
+                TF_num is not None and choice_num is not None and multi_num is not None):
             raise SerializerError("缺少数量", response_code.INVALID_PARAMS)
 
         if question_num or question_list:
@@ -92,7 +103,7 @@ class CompetitionSerializer(serializers.ModelSerializer):
 
         instance = super().create({
             **validated_data,
-            "total_num": len(question_list) or question_num or TF_num + choice_num
+            "total_num": len(question_list) or question_num or TF_num + choice_num + multi_num
         })
 
         if question_list:
