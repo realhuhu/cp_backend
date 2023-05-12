@@ -13,6 +13,7 @@ def getToken(user):
 def getUserInfo(user):
     return {
         "id": user.id,
+        "card": user.card,
         "username": user.username,
         "date_joined": user.date_joined,
         "phone": user.phone,

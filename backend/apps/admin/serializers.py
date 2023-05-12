@@ -1,7 +1,5 @@
 from random import sample
 
-from rest_framework.exceptions import ValidationError
-
 from competition.models import *
 from user.models import *
 from common.models import *
@@ -24,9 +22,31 @@ class QuestionBankSerializer(serializers.ModelSerializer):
                   "category",
                   "difficulty",
                   "answer_num",
+                  "question_type",
                   "correct_answer_num",
                   "is_active"
                   ]
+        extra_kwargs = {
+            "choice_c": {"required": False, "allow_blank": True},
+            "choice_d": {"required": False, "allow_blank": True},
+            "category": {"required": False, "allow_blank": True},
+            "difficulty": {"required": False, "allow_blank": True},
+        }
+
+    def create(self, validated_data):
+        print(validated_data)
+        num = 0
+        if validated_data.get("choice_a"):
+            num += 1
+        if validated_data.get("choice_b"):
+            num += 1
+        if validated_data.get("choice_c"):
+            num += 1
+        if validated_data.get("choice_d"):
+            num += 1
+        if num <= 2:
+            validated_data["question_type"] = 1
+        return super(QuestionBankSerializer, self).create(validated_data)
 
 
 class ScoreSerializer(serializers.ModelSerializer):
@@ -51,29 +71,45 @@ class ScoreSerializer(serializers.ModelSerializer):
 class CompetitionSerializer(serializers.ModelSerializer):
     question_list = serializers.ListField(write_only=True, required=False)
     question_num = serializers.IntegerField(write_only=True, required=False)
+    choice_num = serializers.IntegerField(write_only=True, required=False)
+    TF_num = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
         model = Competition
         fields = "__all__"
 
     def create(self, validated_data):
-        questions = validated_data.pop("question_list", None)
-        num = validated_data.pop("question_num", None)
+        question_list = validated_data.pop("question_list", [])
+        question_num = validated_data.pop("question_num", None)
+        choice_num = validated_data.get("choice_num")
+        TF_num = validated_data.get("TF_num")
 
-        if not questions and not num:
-            raise ValidationError("缺少数量")
+        if not question_list and not question_num and not (TF_num is not None and choice_num is not None):
+            raise SerializerError("缺少数量", response_code.INVALID_PARAMS)
 
-        instance = super(CompetitionSerializer, self).create(validated_data)
+        if question_num or question_list:
+            validated_data["is_random"] = False
 
-        if not questions:
+        instance = super().create({
+            **validated_data,
+            "total_num": len(question_list) or question_num or TF_num + choice_num
+        })
+
+        if question_list:
+            for question_id in question_list:
+                CompetitionToQuestionBank.objects.create(
+                    question_id=QuestionBank.objects.filter(id=question_id).first(),
+                    competition_id=instance
+                )
+
+        if question_num:
             queryset = QuestionBank.objects.filter(is_active=True).values_list("id")
-            questions = sample(list(map(lambda x: x[0], queryset)), num)
-
-        for question_id in questions:
-            CompetitionToQuestionBank.objects.create(
-                question_id=QuestionBank.objects.filter(id=question_id).first(),
-                competition_id=instance
-            )
+            questions = sample(list(map(lambda x: x[0], queryset)), question_num)
+            for question_id in questions:
+                CompetitionToQuestionBank.objects.create(
+                    question_id=QuestionBank.objects.filter(id=question_id).first(),
+                    competition_id=instance
+                )
 
         return instance
 
@@ -83,13 +119,26 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "icon", "phone", "date_joined", "is_superuser", "is_active", "password"]
+        fields = [
+            "id",
+            "card",
+            "username",
+            "icon",
+            "phone",
+            "date_joined",
+            "is_superuser",
+            "is_active",
+            "password",
+        ]
 
     def update(self, instance, validated_data):
         if password := validated_data.pop("password", None):
             instance.set_password(password)
             instance.save()
         return super().update(instance, validated_data)
+
+    def create(self, validated_data):
+        return self.Meta.model.objects.create_user(**validated_data)
 
 
 class ArticleSerializer(serializers.ModelSerializer):

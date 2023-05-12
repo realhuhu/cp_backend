@@ -15,8 +15,7 @@ class SMSCodeView(ViewSet):
     @action(["GET"], False)
     def code(self, request):
         ser = SMSSerializer(data=request.query_params)
-        if not ser.is_valid():
-            return InValidParamsResponse(ser)
+        ser.is_valid(True)
 
         code = ser.validated_data.get("code")
         phone = ser.validated_data.get("phone")

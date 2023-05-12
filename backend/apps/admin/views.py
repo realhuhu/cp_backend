@@ -14,7 +14,7 @@ class QuestionBankView(APIModelViewSet):
     queryset = QuestionBank.objects.all()
     serializer_class = QuestionBankSerializer
     filter_fields = ["category", "difficulty", "is_active"]
-    search_fields = ["id", "content", "choice_a", "choice_b", "choice_b"]
+    search_fields = ["id", "content", "choice_a", "choice_b", "choice_b", "category", "difficulty"]
 
     def get_queryset(self):
         if cid := self.request.query_params.copy().get("cid"):
@@ -95,6 +95,15 @@ class UserView(APIModelViewSet):
     filter_fields = ["is_active"]
     search_fields = ["username", "phone"]
 
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        kwargs.setdefault('context', self.get_serializer_context())
+        if isinstance(self.request.data, list):
+            kwargs.pop("many", None)
+            return serializer_class(many=True, *args, **kwargs)
+        else:
+            return serializer_class(*args, **kwargs)
+
 
 class ArticleView(APIModelViewSet):
     throttle_classes = []
@@ -107,6 +116,8 @@ class ArticleView(APIModelViewSet):
 
 class SwipeView(APIModelViewSet):
     throttle_classes = []
+    http_method_names = ['get', 'post', 'put', 'patch', "delete", 'head', 'options', 'trace']
+
     authentication_classes = [SuperuserJwtAuthentication]
     queryset = Swipe.objects.all().order_by("id")
     serializer_class = SwipeSerializer

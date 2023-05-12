@@ -8,24 +8,11 @@ from backend.libs import *
 from backend.utils.COS import *
 
 
-class RegisterView(ViewSet):
-    @action(["POST"], False)
-    def register(self, request):
-        ser = RegisterSerializer(data=request.data)
-        if not ser.is_valid():
-            return InValidParamsResponse(ser)
-
-        user = ser.save()
-
-        return UserInfoResponse(user, response_code.SUCCESS_REGISTER)
-
-
 class LoginView(ViewSet):
     @action(["POST"], False)
     def login(self, request):
         ser = LoginSerializer(data=request.data)
-        if not ser.is_valid():
-            return InValidParamsResponse(ser)
+        ser.is_valid(True)
 
         user = ser.context["user"]
         user_info = getUserInfo(user)
@@ -40,24 +27,14 @@ class UserInfoView(ViewSet):
             return None
         return [CommonJwtAuthentication()]
 
-    @action(["GET", "POST"], False)
+    @action(["GET", ], False)
     def user_info(self, request):
-        if request.method == "GET":
-            return UserInfoResponse(request.user, response_code.SUCCESS_GET_USER_INFO)
-        else:
-            ser = UserInfoSerializer(request.user, request.data)
-            if not ser.is_valid():
-                return InValidParamsResponse(ser)
-
-            user = ser.save()
-            code = response_code.SUCCESS_POST_USER_INFO
-            return UserInfoResponse(user, code)
+        return UserInfoResponse(request.user, response_code.SUCCESS_GET_USER_INFO)
 
     @action(["POST"], False)
     def reset_password(self, request):
         ser = ResetPasswordSerializer(User.objects, request.data)
-        if not ser.is_valid():
-            return InValidParamsResponse(ser)
+        ser.is_valid(True)
 
         ser.save()
         return APIResponse(response_code.SUCCESS_RESET_PASSWORD, "重置密码成功")
@@ -65,8 +42,7 @@ class UserInfoView(ViewSet):
     @action(["POST"], False)
     def change_password(self, request):
         ser = ChangePasswordSerializer(request.user, request.data)
-        if not ser.is_valid():
-            return InValidParamsResponse(ser)
+        ser.is_valid(True)
 
         if not request.user.check_password(ser.validated_data.get("old_password")):
             return APIResponse(response_code.INCORRECT_PASSWORD, "原密码错误")
@@ -76,18 +52,16 @@ class UserInfoView(ViewSet):
 
     @action(["POST"], False)
     def bind_phone(self, request):
-        ser = BindPhoneView(request.user, request.data)
-        if not ser.is_valid():
-            return InValidParamsResponse(ser)
+        ser = BindPhoneSerializer(request.user, request.data)
+        ser.is_valid(True)
 
         ser.save()
         return APIResponse(response_code.SUCCESS_BIND_PHONE, "绑定手机成功")
 
     @action(["POST"], False)
     def unbind_phone(self, request):
-        ser = UnbindPhoneView(request.user, request.data)
-        if not ser.is_valid():
-            return InValidParamsResponse(ser)
+        ser = UnbindPhoneSerializer(request.user, request.data)
+        ser.is_valid(True)
 
         ser.save()
         return APIResponse(response_code.SUCCESS_UNBIND_PHONE, "解除绑定成功")
@@ -118,7 +92,6 @@ class UserInfoView(ViewSet):
 
 
 __all__ = [
-    "RegisterView",
     "LoginView",
     "UserInfoView"
 ]

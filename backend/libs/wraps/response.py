@@ -18,13 +18,6 @@ class APIResponse(Response):
         super().__init__(data=dic, status=status, headers=headers, content_type=content_type)
 
 
-def InValidParamsResponse(ser):
-    if ser.context:
-        return APIResponse(**ser.context, result=ser.errors)
-    else:
-        return APIResponse(response_code.INCOMPLETE_PARAMS, "缺失参数", result=ser.errors)
-
-
 def UserInfoResponse(user, code):
     user_info = getUserInfo(user)
     token = getToken(user)
@@ -33,6 +26,5 @@ def UserInfoResponse(user, code):
 
 __all__ = [
     "APIResponse",
-    "InValidParamsResponse",
     "UserInfoResponse"
 ]

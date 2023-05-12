@@ -3,11 +3,6 @@ from backend.libs import *
 
 
 class CompetitionSerializer(serializers.ModelSerializer):
-    questions = serializers.SerializerMethodField()
-
-    def get_questions(self, instance):
-        return len(instance.questions.filter(is_active=True).values("id").all())
-
     class Meta:
         model = Competition
         fields = [
@@ -16,8 +11,9 @@ class CompetitionSerializer(serializers.ModelSerializer):
             "start_time",
             "end_time",
             "time_limit",
-            "questions",
-            "answer_num"
+            "answer_num",
+            "total_num",
+            "answer_times"
         ]
 
 
@@ -34,16 +30,7 @@ class CompetitionDetailSerializer(serializers.ModelSerializer):
         ]
 
 
-class EntrySerializer(serializers.ModelSerializer):
-    competition_name = serializers.SerializerMethodField()
-    total = serializers.SerializerMethodField()
-
-    def get_competition_name(self, instance):
-        return instance.competition_id.title
-
-    def get_total(self, instance):
-        return len(instance.competition_id.questions.filter(is_active=True).values("id").all())
-
+class CompetitionRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserToCompetition
         fields = [
@@ -51,8 +38,29 @@ class EntrySerializer(serializers.ModelSerializer):
             "score",
             "start_time",
             "time_used",
-            "competition_name",
-            "total"
+            "answer_times"
+        ]
+
+
+class EntrySerializer(serializers.ModelSerializer):
+    record = serializers.SerializerMethodField()
+
+    def get_record(self, instance: Competition):
+        return CompetitionRecordSerializer(
+            instance.usertocompetition_set.filter(is_active=True,
+                                                  user_id=self.context["view"].request.user).all().order_by(
+                "answer_times"), many=True).data
+
+    class Meta:
+        model = Competition
+        fields = [
+            "id",
+            "title",
+            "start_time",
+            "end_time",
+            "total_num",
+            "answer_times",
+            "record"
         ]
 
 

@@ -13,6 +13,7 @@ class QuestionBank(models.Model):
     answer_num = models.IntegerField(default=0, verbose_name="被回答次数")
     correct_answer_num = models.IntegerField(default=0, verbose_name="被正确回答次数")
     is_active = models.BooleanField(default=True, verbose_name="是否有效")
+    question_type = models.IntegerField(default=0, verbose_name="是否为判断题")
 
     class Meta:
         ordering = ["id"]
@@ -29,6 +30,11 @@ class Competition(models.Model):
                                        through_fields=('competition_id', 'question_id'),
                                        )
     is_active = models.BooleanField(default=True, verbose_name="是否有效")
+    total_num = models.IntegerField(null=True, verbose_name="题目数量")
+    choice_num = models.IntegerField(verbose_name="选择题数量", null=True, default=None)
+    TF_num = models.IntegerField(verbose_name="判断题数量", null=True, default=None)
+    answer_times = models.IntegerField(verbose_name="可答次数", default=1)
+    is_random = models.BooleanField(default=True, verbose_name="是否随机")
 
     class Meta:
         ordering = ["id"]
@@ -41,6 +47,7 @@ class UserToCompetition(models.Model):
     start_time = models.DateTimeField(auto_now_add=True, verbose_name="开始答题时间")
     time_used = models.IntegerField(null=True, default=None, verbose_name="耗时(秒)")
     score = models.IntegerField(null=True, default=None, verbose_name="得分")
+    answer_times = models.IntegerField(verbose_name="第几次回答", default=1)
     is_active = models.BooleanField(default=True, verbose_name="是否有效")
 
 
