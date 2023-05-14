@@ -49,7 +49,7 @@ class QuestionBankSerializer(serializers.ModelSerializer):
             if validated_data.get("choice_d"):
                 num += 1
 
-            if num <= 2:
+            if num <= 2 and len(validated_data.get("choice_a")) == 1 and len(validated_data.get("choice_b")) == 1:
                 validated_data["question_type"] = 1
             else:
                 validated_data["question_type"] = 0
